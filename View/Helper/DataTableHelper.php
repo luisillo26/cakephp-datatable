@@ -32,8 +32,9 @@ class DataTableHelper extends HtmlHelper {
 			'tfoot' => '',
 			'tfootOptions' => array(),
 		),
-		'scriptBlock' => 'script',
+		'scriptBlock' => 'datatable',
 		'js' => array(
+			'sAjaxSource' => array(),
 			'bServerSide' => true,
 		),
 	);
@@ -74,7 +75,7 @@ class DataTableHelper extends HtmlHelper {
  */
 	public function __construct(View $View, $settings = array()) {
 		parent::__construct($View, $settings);
-		$this->settings = Hash::merge($this->settings, $settings);
+		$this->settings = Set::merge($this->settings, $settings);
 		if (isset($this->_View->viewVars['dtColumns'])) {
 			$dtColumns = $this->_View->viewVars['dtColumns'];
 			foreach($dtColumns as $model => $columns) {
@@ -99,7 +100,7 @@ class DataTableHelper extends HtmlHelper {
 		$this->scriptBlock($jsVar, array('block' => 'dataTableSettings'));
 		if ($this->settings['scriptBlock'] !== false) {
 			$initScript = <<< INIT_SCRIPT
-$(document).ready(function() {
+jQuery(function($) {
 	$('.dataTable').each(function() {
 		var table = $(this);
 		var model = table.attr('data-model');
@@ -108,7 +109,7 @@ $(document).ready(function() {
 	});
 });
 INIT_SCRIPT;
-			$this->scriptBlock($initScript, array('block' => $this->settings['scriptBlock']));
+			$this->scriptBlock($initScript, array('block' => $this->settings['scriptBlock'], 'inline' => false));
 		}
 	}
 
@@ -228,6 +229,7 @@ INIT_SCRIPT;
 						'model' => $model
 					);
 				}
+				$settings['sAjaxSource'][] = $this->_getForeignKey();
 				$settings['sAjaxSource'] = Router::url($settings['sAjaxSource']);
 			}
 		}
@@ -299,6 +301,20 @@ INIT_SCRIPT;
 			return null;
 		}
 		return $model;
+	}
+
+
+/**
+ * Get the foreignKey value for the associated model
+ * 
+ * @return string
+ */
+	protected function _getForeignKey() {
+		$foreignKey = null;
+		if (!empty($this->request->params['pass']['0'])) {
+			$foreignKey = $this->request->params['pass']['0'];
+		}
+		return $foreignKey;
 	}
 
 }
